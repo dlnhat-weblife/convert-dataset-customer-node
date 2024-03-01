@@ -59,7 +59,9 @@ fs.createReadStream(path)
         specialProvinces.some((p) => addressFull.includes(p))
       ) {
         // const index = specialProvinces.indexOf((p) => addressFull.includes(p));
-        const index = specialProvinces.findIndex((p) => addressFull.includes(p));
+        const index = specialProvinces.findIndex((p) =>
+          addressFull.includes(p)
+        );
         province = specialProvinces[index];
         addressWithoutProvince = String(addressFull.replace(province, ""));
       } else {
@@ -68,10 +70,10 @@ fs.createReadStream(path)
         addressWithoutProvince = String(rest);
       }
 
-      if (
-        specialCities.some((c) => addressWithoutProvince.includes(c))
-      ) {
-        const index = specialCities.findIndex((c) => addressWithoutProvince.includes(c));
+      if (specialCities.some((c) => addressWithoutProvince.includes(c))) {
+        const index = specialCities.findIndex((c) =>
+          addressWithoutProvince.includes(c)
+        );
         city = specialCities[index];
         address = addressWithoutProvince.replace(city, "");
       } else {
@@ -80,9 +82,18 @@ fs.createReadStream(path)
           city = c + "郡";
           address = rest;
         } else if (addressWithoutProvince.includes("市")) {
-          const [c, rest] = addressWithoutProvince.split("市");
-          city = c + "市";
-          address = rest;
+          if (addressWithoutProvince.includes("市市")) {
+            const [c, rest] = addressWithoutProvince
+              .replace("市市", "市")
+              .split("市");
+            city = c + "市";
+            address = "市" + rest;
+          } else {
+            const [c, rest] = addressWithoutProvince
+              .split("市");
+            city = c + "市";
+            address = rest;
+          }
         } else if (addressWithoutProvince.includes("区")) {
           const [c, rest] = addressWithoutProvince.split("区");
           city = c + "区";
