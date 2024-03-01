@@ -35,7 +35,7 @@ writer.write(
     "Address Province",
     "Address City",
     "Address Line 1",
-    "Metafield: account.address [multi_line_text_field]",
+    "Metafield: account.address [single_line_text_field]",
     "Metafield: account.register-line1 [single_line_text_field]",
     "Metafield: account.register-ec [single_line_text_field]",
     "Metafield: account.delete-flg [single_line_text_field]",
