@@ -5,6 +5,26 @@ const fs = require("fs");
 const path = "./cust.csv";
 const rs = [];
 
+const specialProvinces = ["北海道", "東京都", "京都府", "大阪府"];
+
+const specialCities = [
+  "大和郡山市",
+  "郡山市",
+  "市川市",
+  "市原市",
+  "郡上市",
+  "蒲郡市",
+  "四日市市",
+  "廿日市市",
+  "小郡市",
+  "野々市市",
+  "高市郡",
+  "余市郡",
+];
+
+const number = new RegExp(/\d/);
+const jpNumber = new RegExp(/[０-９]/);
+
 fs.createReadStream(path)
   .pipe(csv())
   .on("data", async (row) => {
@@ -24,22 +44,59 @@ fs.createReadStream(path)
       phoneNumber = phoneNumber.replace("81", "0");
     }
     const zipCode = String(row.ADDRESS_ZIP).replace(/[-ー ]/g, "");
-    const addressFull = row.ADDRESS_FULL;
-    let city, province, address, addressWithoutCity;
+    const addressFull = String(row.ADDRESS_FULL);
+    let province,
+      city,
+      address,
+      addressWithoutProvince = addressFull;
 
-    /**
-     * city: 郡 | 市 | 区 | 町 | 村
-     */
-    if (addressFull.includes("郡")) {
-      city = addressFull.split("郡")[0] + "郡";
-    } else if (addressFull.includes("市")) {
-      city = addressFull.split("市")[0] + "市";
-    } else if (addressFull.includes("区")) {
-      city = addressFull.split("区")[0] + "区";
-    } else if (addressFull.includes("町")) {
-      city = addressFull.split("町")[0] + "町";
-    } else if (addressFull.includes("村")) {
-      city = addressFull.split("村")[0] + "村";
+    if (
+      String(addressFull).length &&
+      (number.test(addressFull) || jpNumber.test(addressFull))
+    ) {
+      if (
+        // specialProvinces.includes(addressFull)
+        specialProvinces.some((p) => addressFull.includes(p))
+      ) {
+        // const index = specialProvinces.indexOf((p) => addressFull.includes(p));
+        const index = specialProvinces.findIndex((p) => addressFull.includes(p));
+        province = specialProvinces[index];
+        addressWithoutProvince = String(addressFull.replace(province, ""));
+      } else {
+        const [p, rest] = addressFull.split("県");
+        province = p + "県";
+        addressWithoutProvince = String(rest);
+      }
+
+      if (
+        specialCities.some((c) => addressWithoutProvince.includes(c))
+      ) {
+        const index = specialCities.findIndex((c) => addressWithoutProvince.includes(c));
+        city = specialCities[index];
+        address = addressWithoutProvince.replace(city, "");
+      } else {
+        if (addressWithoutProvince.includes("郡")) {
+          const [c, rest] = addressWithoutProvince.split("郡");
+          city = c + "郡";
+          address = rest;
+        } else if (addressWithoutProvince.includes("市")) {
+          const [c, rest] = addressWithoutProvince.split("市");
+          city = c + "市";
+          address = rest;
+        } else if (addressWithoutProvince.includes("区")) {
+          const [c, rest] = addressWithoutProvince.split("区");
+          city = c + "区";
+          address = rest;
+        } else if (addressWithoutProvince.includes("町")) {
+          const [c, rest] = addressWithoutProvince.split("町");
+          city = c + "町";
+          address = rest;
+        } else if (addressWithoutProvince.includes("村")) {
+          const [c, rest] = addressWithoutProvince.split("村");
+          city = c + "村";
+          address = rest;
+        }
+      }
     }
 
     rs.push([
@@ -48,8 +105,8 @@ fs.createReadStream(path)
       "FALSE",
       randomPassword,
       randomPassword,
-      row.CUST_ID_CRM, // expect to be changed in the future
-      row.CUST_ID_CRM, // expect to be changed in the future
+      row.CUST_ID_LINE,
+      row.CUST_ID_CRM,
       row.CUST_BARCD,
       row.CUST_BARCD_SP,
       row.LINE_ADDRESS,
@@ -65,9 +122,9 @@ fs.createReadStream(path)
       phoneNumber,
       "JP",
       zipCode,
-      "", // province
-      "", // city
-      "", // address
+      province, // province
+      city, // city
+      address, // address
       row.ADDRESS_FULL,
       row.REGIST_DATE_LINE,
       row.REGIST_DATE_EC,
@@ -88,8 +145,8 @@ fs.createReadStream(path)
       row.POINT_REACHING_EXPIRATION,
       row.CUST_RANK,
       row.CUSTATTRIB_TAGS,
-      "", // note1
-      "", // note2,
+      row.NOTE_BYHQ,
+      row.NOTE_BYSTORE,
       row.LINE_REGIST_DATE,
       row.LINE_UPDATE_DATE,
       row.CUSTATTRIB_UPDATE_DATE,
